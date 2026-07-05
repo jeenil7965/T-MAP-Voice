@@ -1,0 +1,7 @@
+plugins { id 'com.android.application' }
+
+android { namespace 'com.sm3.audiosuite'; compileSdk 35
+    defaultConfig { applicationId 'com.sm3.audiosuite'; minSdk 23; targetSdk 35; versionCode 12; versionName '1.2-real-mokpo' }
+}
+
+dependencies { implementation 'androidx.documentfile:documentfile:1.0.1' }
