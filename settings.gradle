@@ -5,6 +5,12 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories{ google(); mavenCentral() } }
-rootProject.name = 'SM3AudioSuite'
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = 'SM3 Stable Final Today'
 include ':app'

@@ -1,5 +1,16 @@
-plugins { id 'com.android.application' }
+plugins {
+    id 'com.android.application'
+}
 
-android { namespace 'com.sm3.audiosuite'; compileSdk 35
-    defaultConfig { applicationId 'com.sm3.audiosuite'; minSdk 23; targetSdk 35; versionCode 21; versionName '2.1-realcore' }
+android {
+    namespace 'com.sm3.stable'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.sm3.stable"
+        minSdk 24
+        targetSdk 34
+        versionCode 10
+        versionName "1.0-stable"
+    }
 }
