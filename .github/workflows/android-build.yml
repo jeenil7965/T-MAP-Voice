@@ -25,5 +25,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: SM3-Audio-Suite-V1.4-Premium-UI-debug-apk
+          name: SM3-Audio-Suite-V1.5-PowerUI-debug-apk
           path: app/build/outputs/apk/debug/*.apk
