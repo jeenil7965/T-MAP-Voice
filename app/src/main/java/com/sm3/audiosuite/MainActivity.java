@@ -1,51 +1,27 @@
 package com.sm3.audiosuite;
 
-import android.Manifest;
-import android.app.Activity;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.media.MediaPlayer;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Bundle;
-import android.provider.Settings;
-import android.view.Gravity;
-import android.view.View;
-import android.widget.*;
-import androidx.documentfile.provider.DocumentFile;
-import java.util.*;
+import android.app.*;import android.os.*;import android.content.*;import android.net.*;import android.provider.Settings;import android.speech.tts.TextToSpeech;import android.media.MediaPlayer;import android.view.*;import android.widget.*;import java.util.*;import java.io.*;
 
-public class MainActivity extends Activity {
-    private static final int REQ_FOLDER = 1001;
-    private final ArrayList<Uri> tracks = new ArrayList<>();
-    private int index = 0;
-    private MediaPlayer player;
-    private TextView status;
-    private boolean shuffle = false;
-    private final Random random = new Random();
-
-    @Override public void onCreate(Bundle b) {
-        super.onCreate(b);
-        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{Manifest.permission.READ_MEDIA_AUDIO}, 7);
-        LinearLayout root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setPadding(28,28,28,28); root.setGravity(Gravity.CENTER_HORIZONTAL);
-        TextView title = new TextView(this); title.setText("SM3 Audio Suite V1.2\n목포 억양 TTS + 폴더 재생"); title.setTextSize(24); title.setGravity(Gravity.CENTER); root.addView(title);
-        Button acc = button("접근성 설정 열기"); acc.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))); root.addView(acc);
-        Button folder = button("음악 폴더 선택"); folder.setOnClickListener(v -> openFolder()); root.addView(folder);
-        LinearLayout row = new LinearLayout(this); row.setGravity(Gravity.CENTER); row.setOrientation(LinearLayout.HORIZONTAL);
-        Button prev = button("◀ 이전"); Button play = button("▶ 재생"); Button next = button("다음 ▶");
-        prev.setOnClickListener(v -> prev()); play.setOnClickListener(v -> toggle()); next.setOnClickListener(v -> next());
-        row.addView(prev); row.addView(play); row.addView(next); root.addView(row);
-        Button sh = button("셔플 OFF"); sh.setOnClickListener(v -> { shuffle=!shuffle; sh.setText(shuffle?"셔플 ON":"셔플 OFF"); }); root.addView(sh);
-        status = new TextView(this); status.setText("티맵 음성은 묵음 처리 후 접근성을 켜주세요.\nOGG/MP3/M4A/WAV 폴더 재생 가능."); status.setTextSize(16); status.setPadding(0,30,0,0); root.addView(status);
-        setContentView(root);
-    }
-    private Button button(String s){ Button b=new Button(this); b.setText(s); b.setTextSize(18); b.setAllCaps(false); return b; }
-    private void openFolder(){ Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE); i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION); startActivityForResult(i, REQ_FOLDER); }
-    @Override protected void onActivityResult(int r,int c,Intent data){ super.onActivityResult(r,c,data); if(r==REQ_FOLDER&&c==RESULT_OK&&data!=null){ Uri u=data.getData(); getContentResolver().takePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION); tracks.clear(); scan(DocumentFile.fromTreeUri(this,u)); status.setText("곡 " + tracks.size() + "개 찾음"); index=0; } }
-    private void scan(DocumentFile f){ if(f==null) return; if(f.isDirectory()){ for(DocumentFile x:f.listFiles()) scan(x); } else { String n=f.getName()==null?"":f.getName().toLowerCase(); if(n.endsWith(".mp3")||n.endsWith(".m4a")||n.endsWith(".ogg")||n.endsWith(".wav")||n.endsWith(".flac")) tracks.add(f.getUri()); } }
-    private void toggle(){ if(player!=null&&player.isPlaying()){ player.pause(); status.setText("일시정지"); } else playCurrent(); }
-    private void playCurrent(){ if(tracks.isEmpty()){ status.setText("먼저 음악 폴더를 선택하세요."); return; } try{ if(player!=null){player.release();} player=new MediaPlayer(); player.setDataSource(this, tracks.get(index)); player.setOnCompletionListener(mp->next()); player.prepare(); player.start(); status.setText("재생 중: " + (index+1) + "/" + tracks.size()); }catch(Exception e){ status.setText("재생 오류: "+e.getMessage()); } }
-    private void next(){ if(tracks.isEmpty()) return; index = shuffle ? random.nextInt(tracks.size()) : (index+1)%tracks.size(); playCurrent(); }
-    private void prev(){ if(tracks.isEmpty()) return; index = (index-1+tracks.size())%tracks.size(); playCurrent(); }
-    @Override protected void onDestroy(){ if(player!=null) player.release(); super.onDestroy(); }
+public class MainActivity extends Activity{
+    static ArrayList<Uri> tracks=new ArrayList<>(); static int index=0; static MediaPlayer player; static TextToSpeech tts; TextView status;
+    final int PICK=77;
+    @Override public void onCreate(Bundle b){super.onCreate(b); initTts(); buildUi();}
+    void initTts(){tts=new TextToSpeech(this, s->{ if(s==TextToSpeech.SUCCESS){ tts.setLanguage(Locale.KOREAN); tts.setSpeechRate(0.82f); tts.setPitch(0.86f);} });}
+    void buildUi(){LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(28,28,28,28);root.setBackgroundColor(0xff101820);
+        TextView title=new TextView(this); title.setText("SM3 Audio Suite V1.3\n목포 TTS + 티맵 안내 + 폴더 재생");title.setTextSize(24);title.setTextColor(0xffffffff);root.addView(title);
+        status=new TextView(this); status.setText("티맵은 묵음 처리 후 접근성 권한을 켜세요.");status.setTextSize(16);status.setTextColor(0xffcfd8dc);status.setPadding(0,20,0,20);root.addView(status);
+        Button acc=btn("접근성 설정 열기");acc.setOnClickListener(v->startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));root.addView(acc);
+        Button folder=btn("음악 파일 선택/추가");folder.setOnClickListener(v->{Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.setType("audio/*");i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,true);i.addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(i,PICK);});root.addView(folder);
+        LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.HORIZONTAL);root.addView(row);
+        Button prev=btn("◀ 이전");Button play=btn("▶/⏸");Button next=btn("다음 ▶");Button stop=btn("■ 정지"); row.addView(prev,new LinearLayout.LayoutParams(0,120,1));row.addView(play,new LinearLayout.LayoutParams(0,120,1));row.addView(next,new LinearLayout.LayoutParams(0,120,1));row.addView(stop,new LinearLayout.LayoutParams(0,120,1));
+        prev.setOnClickListener(v->{if(tracks.size()>0){index=(index-1+tracks.size())%tracks.size();startTrack();}});
+        next.setOnClickListener(v->{if(tracks.size()>0){index=(index+1)%tracks.size();startTrack();}});
+        play.setOnClickListener(v->{ if(player!=null && player.isPlaying())player.pause(); else if(player!=null)player.start(); else if(tracks.size()>0)startTrack();});
+        stop.setOnClickListener(v->{ if(player!=null){player.stop();player.release();player=null;}});
+        Button test=btn("목포 안내 테스트"); test.setOnClickListener(v->TmapAccessibilityService.speakStatic(this,"아따아, 잠시 후 좌회전이랑께요오.")); root.addView(test);
+        setContentView(root);}
+    Button btn(String s){Button b=new Button(this);b.setText(s);b.setTextSize(18);b.setAllCaps(false);return b;}
+    @Override protected void onActivityResult(int r,int c,Intent data){super.onActivityResult(r,c,data); if(r==PICK&&c==RESULT_OK&&data!=null){ if(data.getClipData()!=null){for(int i=0;i<data.getClipData().getItemCount();i++)tracks.add(data.getClipData().getItemAt(i).getUri());} else if(data.getData()!=null)tracks.add(data.getData()); status.setText("음악 "+tracks.size()+"개 추가됨");}}
+    static void startTrack(){try{ if(player!=null){player.release();} player=new MediaPlayer(); player.setDataSource(App.ctx,tracks.get(index)); player.prepare(); player.start(); player.setOnCompletionListener(mp->{index=(index+1)%tracks.size();startTrack();}); }catch(Exception e){}}
+    @Override public void onDestroy(){super.onDestroy(); if(tts!=null)tts.shutdown();}
 }

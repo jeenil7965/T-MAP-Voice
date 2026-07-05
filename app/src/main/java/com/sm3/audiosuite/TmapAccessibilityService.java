@@ -1,64 +1,18 @@
 package com.sm3.audiosuite;
 
-import android.accessibilityservice.AccessibilityService;
-import android.speech.tts.TextToSpeech;
-import android.view.accessibility.AccessibilityEvent;
-import android.view.accessibility.AccessibilityNodeInfo;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
+import android.accessibilityservice.AccessibilityService;import android.view.accessibility.*;import android.speech.tts.TextToSpeech;import android.content.*;import java.util.*;
 
-public class TmapAccessibilityService extends AccessibilityService implements TextToSpeech.OnInitListener {
-    private TextToSpeech tts;
-    private String lastSpoken = "";
-    private long lastTime = 0;
-    private final String[] keywords = {"좌회전","우회전","유턴","직진","단속","카메라","과속","목적지","도착","고속도로","나들목","진출","차로","회전교차로","보호구역"};
-
-    @Override public void onServiceConnected() { tts = new TextToSpeech(this, this); }
-    @Override public void onInit(int status) { if (tts != null) { tts.setLanguage(Locale.KOREAN); tts.setSpeechRate(0.82f); tts.setPitch(0.88f); } }
-    @Override public void onInterrupt() {}
-    @Override public void onDestroy() { if (tts != null) { tts.stop(); tts.shutdown(); } super.onDestroy(); }
-
-    @Override public void onAccessibilityEvent(AccessibilityEvent event) {
-        if (event == null) return;
-        CharSequence pkg = event.getPackageName();
-        if (pkg == null || !pkg.toString().toLowerCase().contains("tmap")) return;
-        AccessibilityNodeInfo root = getRootInActiveWindow();
-        if (root == null) return;
-        Set<String> texts = new HashSet<>();
-        collect(root, texts);
-        for (String text : texts) {
-            String candidate = filter(text);
-            if (candidate.length() > 0) speak(candidate);
-        }
-    }
-
-    private void collect(AccessibilityNodeInfo node, Set<String> out) {
-        if (node == null) return;
-        CharSequence t = node.getText();
-        if (t != null) out.add(t.toString());
-        CharSequence d = node.getContentDescription();
-        if (d != null) out.add(d.toString());
-        for (int i=0;i<node.getChildCount();i++) collect(node.getChild(i), out);
-    }
-
-    private String filter(String s) {
-        if (s == null) return "";
-        s = s.replaceAll("\\s+", " ").trim();
-        if (s.length() < 2 || s.length() > 55) return "";
-        boolean has = false;
-        for (String k: keywords) if (s.contains(k)) { has = true; break; }
-        if (!has) return "";
-        if (s.contains("검색") || s.contains("메뉴") || s.contains("즐겨찾기") || s.contains("주변") || s.contains("설정")) return "";
-        return s;
-    }
-
-    private void speak(String raw) {
-        String msg = MokpoSpeech.convert(raw);
-        if (msg.length() == 0) return;
-        long now = System.currentTimeMillis();
-        if (msg.equals(lastSpoken) && now - lastTime < 9000) return;
-        lastSpoken = msg; lastTime = now;
-        if (tts != null) tts.speak(msg, TextToSpeech.QUEUE_FLUSH, null, "mokpo_guide");
-    }
+public class TmapAccessibilityService extends AccessibilityService{
+    static TextToSpeech tts; static long lastTime=0; static String last="";
+    @Override public void onCreate(){super.onCreate(); setupTts(this);} 
+    static void setupTts(Context c){ if(tts==null)tts=new TextToSpeech(c.getApplicationContext(), s->{ if(s==TextToSpeech.SUCCESS){tts.setLanguage(Locale.KOREAN);tts.setSpeechRate(0.80f);tts.setPitch(0.84f);} });}
+    public static void speakStatic(Context c,String msg){setupTts(c); if(tts!=null)tts.speak(msg,TextToSpeech.QUEUE_FLUSH,null,"sm3-test");}
+    @Override public void onAccessibilityEvent(AccessibilityEvent e){ if(e==null)return; CharSequence pkg=e.getPackageName(); if(pkg==null || !pkg.toString().toLowerCase().contains("tmap"))return; AccessibilityNodeInfo root=getRootInActiveWindow(); if(root==null)return; ArrayList<String> texts=new ArrayList<>(); collect(root,texts); String guide=findGuide(texts); if(guide!=null) speakGuide(guide); }
+    void collect(AccessibilityNodeInfo n,ArrayList<String> out){ if(n==null)return; CharSequence t=n.getText(); if(t!=null){String s=t.toString().trim(); if(s.length()>0 && s.length()<45)out.add(s);} CharSequence d=n.getContentDescription(); if(d!=null){String s=d.toString().trim(); if(s.length()>0 && s.length()<45)out.add(s);} for(int i=0;i<n.getChildCount();i++)collect(n.getChild(i),out); }
+    String findGuide(ArrayList<String> list){ for(String s:list){ if(isGuide(s)) return s; } return null; }
+    boolean isGuide(String s){ String x=s.replace(" ",""); if(x.length()<2||x.length()>35)return false; String[] keys={"좌회전","우회전","유턴","직진","단속","카메라","목적지","도착","고속도로","분기점","나들목","차로","방면"}; for(String k:keys) if(x.contains(k)) return true; return false; }
+    void speakGuide(String s){ long now=System.currentTimeMillis(); if(s.equals(last)&&now-lastTime<6500)return; last=s; lastTime=now; String msg=toMokpo(s); if(tts!=null)tts.speak(msg,TextToSpeech.QUEUE_FLUSH,null,"sm3-guide"); }
+    String toMokpo(String s){ String x=s.replace("하세요","").replace("입니다","").trim(); if(x.contains("좌회전")) return "아따아, 잠시 후 좌회전이랑께요오."; if(x.contains("우회전")) return "오메에, 잠시 후 우회전이랑께요오."; if(x.contains("유턴")) return "아따아, 앞에서 유턴허면 되것소잉."; if(x.contains("단속")||x.contains("카메라")) return "아따아, 앞에 단속 있응께 속도 쪼까 줄이소잉."; if(x.contains("목적지")||x.contains("도착")) return "고생 많았소잉, 목적지에 도착했당께라."; if(x.contains("고속도로")) return "이제 고속도로로 올라간당께요오."; if(x.contains("차로")) return "차로 잘 맞춰서 천천히 가소잉."; return "아따아, "+x+" 이랑께요오."; }
+    @Override public void onInterrupt(){}
+    @Override public void onDestroy(){super.onDestroy(); if(tts!=null){tts.shutdown();tts=null;}}
 }

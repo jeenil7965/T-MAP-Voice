@@ -1,24 +1,18 @@
-# SM3 Audio Suite V1.2 Real Mokpo
+# SM3 Audio Suite V1.3 Verified
 
-실제 GitHub Actions 빌드용 Android 프로젝트입니다.
+GitHub Actions 빌드용 Android 프로젝트입니다.
 
-## 포함 기능
-- 티맵 접근성 감지
-- 화면 전체 읽기 방지용 키워드 필터
-- 목포 사투리 느낌 TTS 문장 변환
-- TTS 속도 0.82 / 피치 0.88 조정
-- 폴더 음악 재생: MP3, M4A, OGG, WAV, FLAC
-- 이전/다음/재생/일시정지/셔플
-- 차량용 큰 버튼 UI
-- 앱 아이콘
-- GitHub Actions APK 자동 빌드
+기능:
+- 티맵 화면 전체 읽기 방지용 간단 필터
+- 좌회전/우회전/유턴/단속/목적지 등 안내만 목포 스타일 TTS로 출력
+- 음악 파일 선택 후 이전/다음/재생/정지
+- 큰 버튼 UI
 
-## 사용법
-1. GitHub에 이 폴더 내용을 업로드합니다.
-2. Actions → Android APK Build 완료 후 Artifacts에서 APK를 받습니다.
-3. 기존 앱 삭제 후 새 APK를 설치합니다.
-4. 앱 실행 → 접근성 설정 → SM3 Audio Suite 켜기
-5. 티맵 길안내 음성은 묵음으로 설정합니다.
+설치 후:
+1. 티맵 길안내 음성은 묵음 처리
+2. 앱 실행
+3. 접근성 설정에서 SM3 Audio Suite 활성화
+4. 티맵 실행
 
-## 주의
-TTS 억양은 안드로이드 기본 TTS 엔진의 한계가 있습니다. 실제 녹음 OGG를 넣으면 훨씬 자연스럽습니다.
+GitHub Actions:
+- Actions > Android APK Build > Artifacts에서 APK 다운로드
