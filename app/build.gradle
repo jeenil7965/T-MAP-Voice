@@ -1,5 +1,5 @@
 plugins { id 'com.android.application' }
 
 android { namespace 'com.sm3.audiosuite'; compileSdk 35
-    defaultConfig { applicationId 'com.sm3.audiosuite'; minSdk 23; targetSdk 35; versionCode 17; versionName '1.6.1' }
+    defaultConfig { applicationId 'com.sm3.audiosuite'; minSdk 23; targetSdk 35; versionCode 20; versionName '2.0' }
 }
